@@ -26,3 +26,6 @@ coverage
 *.md
 !README.md
 .DS_Store
+
+# Package files (exclude package-lock.json from general json exclusion)
+package.json
