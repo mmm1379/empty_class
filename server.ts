@@ -9,24 +9,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3001;
+const PORT = 3000;
 
 app.use(express.json({ limit: '50mb' }));
 
-const DB_FILE = path.resolve(__dirname, 'data', 'courses.csv');
-const SQLITE_FILE = path.resolve(__dirname, 'data', 'app.db');
-
-// Ensure data directory exists
-const dataDir = path.resolve(__dirname, 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-// Copy default CSV to data directory if it doesn't exist
-const defaultCSVPath = path.resolve(__dirname, 'Courses-14042 (1).csv');
-if (fs.existsSync(defaultCSVPath) && !fs.existsSync(DB_FILE)) {
-  fs.copyFileSync(defaultCSVPath, DB_FILE);
-}
+const DB_FILE = path.resolve(__dirname, 'data.csv');
+const SQLITE_FILE = path.resolve(__dirname, 'app.db');
 
 const db = new Database(SQLITE_FILE);
 db.exec(`

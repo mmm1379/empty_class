@@ -13,6 +13,7 @@ export interface ClassInfo {
   courseNumber: string;
   group: string;
   instructor: string;
+  instructors: string[];
   locations: string[];
   sessions: Session[];
 }
@@ -34,7 +35,16 @@ export const getRoomName = (location: string) => {
 };
 
 export const parseCSV = (csvText: string): ClassInfo[] => {
-  const { data } = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+  // Remove BOM if present
+  let normalizedCsv = csvText.replace(/^\uFEFF/, '').trim();
+  
+  // Find where the real header line starts (contains 'نام درس' or 'شماره درس')
+  const headerMatch = normalizedCsv.match(/(?:^|\n)([^\r\n]*(?:نام درس|شماره درس)[^\r\n]*\r?\n[\s\S]*)/);
+  if (headerMatch) {
+    normalizedCsv = headerMatch[1];
+  }
+
+  const { data } = Papa.parse(normalizedCsv, { header: true, skipEmptyLines: true });
   
   const classes: ClassInfo[] = [];
   
@@ -42,7 +52,10 @@ export const parseCSV = (csvText: string): ClassInfo[] => {
     const name = row['نام درس'];
     const courseNumber = row['شماره درس'];
     const group = row['گروه'];
-    const instructor = [row['نام استاد1'], row['نام استاد2'], row['نام استاد3']].filter(Boolean).join(', ');
+    const instructorsList = [row['نام استاد1'], row['نام استاد2'], row['نام استاد3']]
+      .map((s: any) => (typeof s === 'string' ? s.trim() : ''))
+      .filter(Boolean);
+    const instructor = instructorsList.join(', ');
     const locationStr = row['محل تشکیل'] || '';
     const scheduleStr = row['برنامه هفتگی'] || '';
     
@@ -53,7 +66,14 @@ export const parseCSV = (csvText: string): ClassInfo[] => {
       if (urlMatch && urlMatch.index !== undefined) {
         cleaned = cleaned.substring(0, urlMatch.index).trim();
       } else {
-        if (cleaned.startsWith('http') || cleaned.startsWith('vc.') || cleaned.startsWith('cw.')) {
+        if (
+          cleaned.startsWith('http') ||
+          cleaned.startsWith('vc.') ||
+          cleaned.startsWith('cw.') ||
+          cleaned.includes('کلاس مجازی') ||
+          cleaned.includes('کلاسهای مجازی') ||
+          cleaned.includes('سامانه کلاسهای مجازی')
+        ) {
           cleaned = '';
         }
       }
@@ -93,6 +113,7 @@ export const parseCSV = (csvText: string): ClassInfo[] => {
         courseNumber,
         group,
         instructor,
+        instructors: instructorsList,
         locations,
         sessions
       });
